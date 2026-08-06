@@ -1,0 +1,854 @@
+[33mcommit ebbf41964b2ac2f4d6a516206aae3410720161e1[m
+Author: Nolitha5 <219187556@tut4life.ac.za>
+Date:   Wed Aug 5 14:12:39 2026 +0200
+
+    Initial commit
+
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mnew file mode 100644[m
+[1mindex 0000000..f81dbd2[m
+[1m--- /dev/null[m
+[1m+++ b/.gitignore[m
+[36m@@ -0,0 +1,25 @@[m
+[32m+[m[32m# Dependencies[m
+[32m+[m[32mnode_modules/[m
+[32m+[m[32m__pycache__/[m
+[32m+[m[32m*.pyc[m
+[32m+[m[32m.venv/[m
+[32m+[m[32mvenv/[m
+[32m+[m
+[32m+[m[32m# Environment[m
+[32m+[m[32m.env[m
+[32m+[m[32m.env.local[m
+[32m+[m[32m.env.production[m
+[32m+[m[32m!.env.example[m
+[32m+[m
+[32m+[m[32m# Build outputs[m
+[32m+[m[32mdist/[m
+[32m+[m[32mbuild/[m
+[32m+[m[32m.vite/[m
+[32m+[m
+[32m+[m[32m# OS[m
+[32m+[m[32m.DS_Store[m
+[32m+[m[32mThumbs.db[m
+[32m+[m
+[32m+[m[32m# Logs[m
+[32m+[m[32m*.log[m
+[32m+[m[32mnpm-debug.log*[m
+[1mdiff --git a/README.md b/README.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6a65d8a[m
+[1m--- /dev/null[m
+[1m+++ b/README.md[m
+[36m@@ -0,0 +1,38 @@[m
+[32m+[m[32m# TUT Academic Risk Early Warning Agent[m
+[32m+[m
+[32m+[m[32mAI-powered system to identify academically at-risk students at Tshwane University of Technology.[m
+[32m+[m
+[32m+[m[32m## Project Structure[m
+[32m+[m[32m```[m
+[32m+[m[32m├── frontend/       React + Vite + Tailwind CSS[m
+[32m+[m[32m├── backend/        Node.js + Express API[m
+[32m+[m[32m└── ai-service/     Python FastAPI AI Engine[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## Quick Start[m
+[32m+[m
+[32m+[m[32m### 1. Supabase[m
+[32m+[m[32m- Create a project at https://supabase.com[m
+[32m+[m[32m- Copy `.env.example` files and fill in your credentials[m
+[32m+[m
+[32m+[m[32m### 2. Backend[m
+[32m+[m[32m```bash[m
+[32m+[m[32mcd backend && npm install && npm run dev[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### 3. AI Service[m
+[32m+[m[32m```bash[m
+[32m+[m[32mcd ai-service && pip install -r requirements.txt && uvicorn main:app --reload --port 8000[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m### 4. Frontend[m
+[32m+[m[32m```bash[m
+[32m+[m[32mcd frontend && npm install && npm run dev[m
+[32m+[m[32m```[m
+[32m+[m
+[32m+[m[32m## Phases[m
+[32m+[m[32m- [x] Phase 1 – Folder structure & config[m
+[32m+[m[32m- [ ] Phase 2 – Supabase schema & seed data[m
+[32m+[m[32m- [ ] Phase 3 – Node.js backend (REST API)[m
+[32m+[m[32m- [ ] Phase 4 – Python AI service[m
+[32m+[m[32m- [ ] Phase 5 – React frontend[m
+[1mdiff --git a/ai-service/.env.example b/ai-service/.env.example[m
+[1mnew file mode 100644[m
+[1mindex 0000000..c0b78c3[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/.env.example[m
+[36m@@ -0,0 +1,7 @@[m
+[32m+[m[32mPORT=8000[m
+[32m+[m[32mDEBUG=false[m
+[32m+[m[32mNODE_BACKEND_URL=http://localhost:3001[m
+[32m+[m
+[32m+[m[32m# Risk score thresholds (optional overrides)[m
+[32m+[m[32mHIGH_RISK_THRESHOLD=70[m
+[32m+[m[32mMEDIUM_RISK_THRESHOLD=35[m
+[1mdiff --git a/ai-service/app/__init__.py b/ai-service/app/__init__.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/ai-service/app/config.py b/ai-service/app/config.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..24f4b5f[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/config.py[m
+[36m@@ -0,0 +1,27 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mApplication settings – loaded from environment variables via pydantic-settings.[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom pydantic_settings import BaseSettings, SettingsConfigDict[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass Settings(BaseSettings):[m
+[32m+[m[32m    model_config = SettingsConfigDict(env_file=".env", extra="ignore")[m
+[32m+[m
+[32m+[m[32m    # Service identity[m
+[32m+[m[32m    APP_NAME: str = "TUT REW AI Service"[m
+[32m+[m[32m    APP_VERSION: str = "0.1.0"[m
+[32m+[m[32m    PORT: int = 8000[m
+[32m+[m[32m    DEBUG: bool = False[m
+[32m+[m
+[32m+[m[32m    # Node.js backend (for future bi-directional calls if needed)[m
+[32m+[m[32m    NODE_BACKEND_URL: str = "http://localhost:3001"[m
+[32m+[m
+[32m+[m[32m    # Risk score thresholds (tweak without touching analyser logic)[m
+[32m+[m[32m    HIGH_RISK_THRESHOLD: int = 70[m
+[32m+[m[32m    MEDIUM_RISK_THRESHOLD: int = 35[m
+[32m+[m
+[32m+[m[32m    # Rule weight overrides (optional – default weights live in risk_rules.py)[m
+[32m+[m[32m    # Set these in .env to tune without code changes, e.g. WEIGHT_AVERAGE_BELOW_40=35[m
+[32m+[m
+[32m+[m
+[32m+[m[32msettings = Settings()[m
+[1mdiff --git a/ai-service/app/models/__init__.py b/ai-service/app/models/__init__.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/ai-service/app/models/risk.py b/ai-service/app/models/risk.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7682d03[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/models/risk.py[m
+[36m@@ -0,0 +1,50 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mPydantic models for the risk report returned by the AI service.[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m[32mfrom typing import List, Literal[m
+[32m+[m[32mfrom pydantic import BaseModel, Field[m
+[32m+[m
+[32m+[m[32mRiskLevel = Literal["HIGH", "MEDIUM", "LOW", "NONE"][m
+[32m+[m[32mPriority  = Literal["URGENT", "HIGH", "MEDIUM", "LOW"][m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass RiskReason(BaseModel):[m
+[32m+[m[32m    code:        str[m
+[32m+[m[32m    description: str[m
+[32m+[m[32m    severity:    RiskLevel[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass Intervention(BaseModel):[m
+[32m+[m[32m    type:        str[m
+[32m+[m[32m    description: str[m
+[32m+[m[32m    priority:    Priority[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass RiskReport(BaseModel):[m
+[32m+[m[32m    student_id:            str[m
+[32m+[m[32m    student_name:          str[m
+[32m+[m[32m    risk_level:            RiskLevel[m
+[32m+[m[32m    risk_score:            float = Field(ge=0, le=100)[m
+[32m+[m[32m    reasons:               List[RiskReason][m
+[32m+[m[32m    recommendations:       List[Intervention][m
+[32m+[m[32m    # Summary statistics[m
+[32m+[m[32m    average_mark:          float[m
+[32m+[m[32m    attendance_pct:        float[m
+[32m+[m[32m    lms_logins_per_week:   float[m
+[32m+[m[32m    missed_assessments:    int[m
+[32m+[m[32m    missed_tutor_sessions: int[m
+[32m+[m[32m    failed_modules:        int[m
+[32m+[m[32m    # Per-module breakdown (extra detail for the frontend charts)[m
+[32m+[m[32m    module_marks:          List[dict] = Field(default_factory=list)[m
+[32m+[m[32m    analysed_at:           str[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass BatchAnalysisRequest(BaseModel):[m
+[32m+[m[32m    """Used when the Node.js backend sends multiple students in one call."""[m
+[32m+[m[32m    students: List[StudentAcademicData]   # noqa: F821 – resolved at runtime[m
+[32m+[m
+[32m+[m
+[32m+[m[32m# Resolve forward ref[m
+[32m+[m[32mfrom app.models.student import StudentAcademicData  # noqa: E402[m
+[32m+[m[32mBatchAnalysisRequest.model_rebuild()[m
+[1mdiff --git a/ai-service/app/models/student.py b/ai-service/app/models/student.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..887ed3f[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/models/student.py[m
+[36m@@ -0,0 +1,74 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mPydantic models for student academic data.[m
+[32m+[m[32mThese mirror the shapes sent by the Node.js backend.[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m[32mfrom typing import List, Optional[m
+[32m+[m[32mfrom pydantic import BaseModel, Field, model_validator[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass Mark(BaseModel):[m
+[32m+[m[32m    module_code:     str[m
+[32m+[m[32m    module_name:     str[m
+[32m+[m[32m    mark:            float = Field(ge=0)[m
+[32m+[m[32m    max_mark:        float = Field(gt=0)[m
+[32m+[m[32m    assessment_type: str[m
+[32m+[m
+[32m+[m[32m    @model_validator(mode="after")[m
+[32m+[m[32m    def mark_not_exceed_max(self) -> "Mark":[m
+[32m+[m[32m        if self.mark > self.max_mark:[m
+[32m+[m[32m            raise ValueError(f"mark ({self.mark}) cannot exceed max_mark ({self.max_mark})")[m
+[32m+[m[32m        return self[m
+[32m+[m
+[32m+[m[32m    @property[m
+[32m+[m[32m    def percentage(self) -> float:[m
+[32m+[m[32m        return round((self.mark / self.max_mark) * 100, 2)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass AttendanceRecord(BaseModel):[m
+[32m+[m[32m    module_code:       str[m
+[32m+[m[32m    sessions_attended: int = Field(ge=0)[m
+[32m+[m[32m    sessions_total:    int = Field(ge=0)[m
+[32m+[m
+[32m+[m[32m    @property[m
+[32m+[m[32m    def percentage(self) -> float:[m
+[32m+[m[32m        if self.sessions_total == 0:[m
+[32m+[m[32m            return 0.0[m
+[32m+[m[32m        return round((self.sessions_attended / self.sessions_total) * 100, 2)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass LmsActivity(BaseModel):[m
+[32m+[m[32m    week:        str[m
+[32m+[m[32m    login_count: int = Field(ge=0)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass AssessmentSubmission(BaseModel):[m
+[32m+[m[32m    assessment_name: str[m
+[32m+[m[32m    submitted:       bool[m
+[32m+[m[32m    due_date:        str[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass TutorSession(BaseModel):[m
+[32m+[m[32m    session_date: str[m
+[32m+[m[32m    attended:     bool[m
+[32m+[m[32m    module_code:  str[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass EngagementRecord(BaseModel):[m
+[32m+[m[32m    activity_type: str[m
+[32m+[m[32m    count:         int = Field(ge=0)[m
+[32m+[m[32m    period:        str[m
+[32m+[m
+[32m+[m
+[32m+[m[32mclass StudentAcademicData(BaseModel):[m
+[32m+[m[32m    student_id:             str[m
+[32m+[m[32m    student_name:           str[m
+[32m+[m[32m    student_number:         str[m
+[32m+[m[32m    programme:              str[m
+[32m+[m[32m    year_of_study:          int = Field(ge=1, le=6)[m
+[32m+[m[32m    marks:                  List[Mark]                  = Field(default_factory=list)[m
+[32m+[m[32m    attendance:             List[AttendanceRecord]      = Field(default_factory=list)[m
+[32m+[m[32m    lms_activity:           List[LmsActivity]           = Field(default_factory=list)[m
+[32m+[m[32m    assessment_submissions: List[AssessmentSubmission]  = Field(default_factory=list)[m
+[32m+[m[32m    tutor_sessions:         List[TutorSession]          = Field(default_factory=list)[m
+[32m+[m[32m    engagement:             List[EngagementRecord]      = Field(default_factory=list)[m
+[1mdiff --git a/ai-service/app/prompts/__init__.py b/ai-service/app/prompts/__init__.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/ai-service/app/prompts/risk_prompt.py b/ai-service/app/prompts/risk_prompt.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..83180d5[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/prompts/risk_prompt.py[m
+[36m@@ -0,0 +1,57 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mLLM narrative generation prompts.[m
+[32m+[m[32mPhase 4+ feature: attach an OpenAI / Anthropic key in .env to activate[m
+[32m+[m[32mnatural-language risk narratives alongside the structured report.[m
+[32m+[m[32m"""[m
+[32m+[m
+[32m+[m[32mRISK_NARRATIVE_SYSTEM = ([m
+[32m+[m[32m    "You are an academic support AI at Tshwane University of Technology (TUT). "[m
+[32m+[m[32m    "Your role is to help academic staff understand student risk profiles and take "[m
+[32m+[m[32m    "compassionate, effective action. Always write in a professional, empathetic tone."[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m[32mRISK_NARRATIVE_USER = """[m
+[32m+[m[32mA risk analysis has been completed for the following student. Write a concise[m
+[32m+[m[32mintervention narrative (3–5 sentences) for the assigned academic advisor.[m
+[32m+[m
+[32m+[m[32mStudent:       {student_name}  ({student_number})[m
+[32m+[m[32mProgramme:     {programme}[m
+[32m+[m[32mRisk Level:    {risk_level}[m
+[32m+[m[32mRisk Score:    {risk_score}%[m
+[32m+[m[32mAverage Mark:  {average_mark}%[m
+[32m+[m[32mAttendance:    {attendance_pct}%[m
+[32m+[m[32mLMS Activity:  {lms_logins_per_week} logins/week[m
+[32m+[m
+[32m+[m[32mKey Issues:[m
+[32m+[m[32m{reasons_list}[m
+[32m+[m
+[32m+[m[32mRecommended Actions:[m
+[32m+[m[32m{recommendations_list}[m
+[32m+[m
+[32m+[m[32mWrite your narrative below:[m
+[32m+[m[32m"""[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef build_narrative_prompt(report: dict) -> tuple[str, str]:[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Build (system_prompt, user_prompt) tuple for an LLM API call.[m
+[32m+[m[32m    Usage:[m
+[32m+[m[32m        system, user = build_narrative_prompt(report)[m
+[32m+[m[32m        # Pass to openai.chat.completions.create or anthropic.messages.create[m
+[32m+[m[32m    """[m
+[32m+[m[32m    reasons_list = "\n".join(f"  • {r['description']}" for r in report.get("reasons", []))[m
+[32m+[m[32m    recs_list    = "\n".join(f"  • {r['description']}" for r in report.get("recommendations", []))[m
+[32m+[m
+[32m+[m[32m    user = RISK_NARRATIVE_USER.format([m
+[32m+[m[32m        student_name        = report["student_name"],[m
+[32m+[m[32m        student_number      = report.get("student_number", "N/A"),[m
+[32m+[m[32m        programme           = report.get("programme", "N/A"),[m
+[32m+[m[32m        risk_level          = report["risk_level"],[m
+[32m+[m[32m        risk_score          = report["risk_score"],[m
+[32m+[m[32m        average_mark        = report["average_mark"],[m
+[32m+[m[32m        attendance_pct      = report["attendance_pct"],[m
+[32m+[m[32m        lms_logins_per_week = report["lms_logins_per_week"],[m
+[32m+[m[32m        reasons_list        = reasons_list or "  • No specific risk flags",[m
+[32m+[m[32m        recommendations_list= recs_list    or "  • Continue monitoring",[m
+[32m+[m[32m    )[m
+[32m+[m[32m    return RISK_NARRATIVE_SYSTEM, user[m
+[1mdiff --git a/ai-service/app/routes/__init__.py b/ai-service/app/routes/__init__.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/ai-service/app/routes/health.py b/ai-service/app/routes/health.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..8e99d43[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/routes/health.py[m
+[36m@@ -0,0 +1,12 @@[m
+[32m+[m[32mfrom fastapi import APIRouter[m
+[32m+[m[32mfrom app.config import settings[m
+[32m+[m
+[32m+[m[32mrouter = APIRouter()[m
+[32m+[m
+[32m+[m[32m@router.get("/")[m
+[32m+[m[32mdef health_check():[m
+[32m+[m[32m    return {[m
+[32m+[m[32m        "status":  "ok",[m
+[32m+[m[32m        "service": settings.APP_NAME,[m
+[32m+[m[32m        "version": settings.APP_VERSION,[m
+[32m+[m[32m    }[m
+[1mdiff --git a/ai-service/app/routes/risk.py b/ai-service/app/routes/risk.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..f83020c[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/routes/risk.py[m
+[36m@@ -0,0 +1,45 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mRisk analysis routes.[m
+[32m+[m[32mCalled by the Node.js backend – never directly from the browser.[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom fastapi import APIRouter, HTTPException[m
+[32m+[m[32mfrom app.models.student import StudentAcademicData[m
+[32m+[m[32mfrom app.models.risk import RiskReport[m
+[32m+[m[32mfrom app.services.risk_analyser import analyse_risk[m
+[32m+[m[32mfrom app.services.risk_rules import RISK_RULES[m
+[32m+[m
+[32m+[m[32mrouter = APIRouter()[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@router.post("/analyse", response_model=RiskReport, summary="Analyse risk for one student")[m
+[32m+[m[32masync def analyse_student_risk(data: StudentAcademicData) -> RiskReport:[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Accepts a StudentAcademicData payload from the Node.js backend.[m
+[32m+[m[32m    Returns a full RiskReport with score, level, reasons, and recommendations.[m
+[32m+[m[32m    """[m
+[32m+[m[32m    try:[m
+[32m+[m[32m        return analyse_risk(data)[m
+[32m+[m[32m    except ValueError as e:[m
+[32m+[m[32m        raise HTTPException(status_code=422, detail=str(e))[m
+[32m+[m[32m    except Exception as e:[m
+[32m+[m[32m        raise HTTPException(status_code=500, detail=f"Analysis failed: {e}")[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@router.get("/rules", summary="List all active risk rules")[m
+[32m+[m[32mdef list_risk_rules():[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Returns the current set of risk evaluation rules (without the lambda functions).[m
+[32m+[m[32m    Useful for the admin dashboard to display what rules are active.[m
+[32m+[m[32m    """[m
+[32m+[m[32m    return {[m
+[32m+[m[32m        "count": len(RISK_RULES),[m
+[32m+[m[32m        "rules": [[m
+[32m+[m[32m            {[m
+[32m+[m[32m                "code":         r["code"],[m
+[32m+[m[32m                "description":  r["description"],[m
+[32m+[m[32m                "severity":     r["severity"],[m
+[32m+[m[32m                "score_weight": r["score_weight"],[m
+[32m+[m[32m            }[m
+[32m+[m[32m            for r in RISK_RULES[m
+[32m+[m[32m        ],[m
+[32m+[m[32m    }[m
+[1mdiff --git a/ai-service/app/services/__init__.py b/ai-service/app/services/__init__.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/ai-service/app/services/risk_analyser.py b/ai-service/app/services/risk_analyser.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..9026cab[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/services/risk_analyser.py[m
+[36m@@ -0,0 +1,107 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mCore academic risk analysis engine.[m
+[32m+[m
+[32m+[m[32mPipeline:[m
+[32m+[m[32m  1. Compute all statistics from raw student data[m
+[32m+[m[32m  2. Evaluate every rule against the statistics[m
+[32m+[m[32m  3. Sum the weights of triggered rules → risk score (0-100)[m
+[32m+[m[32m  4. Derive risk level from score thresholds[m
+[32m+[m[32m  5. Build sorted reason list and deduplicated intervention list[m
+[32m+[m[32m  6. Return a fully populated RiskReport[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m
+[32m+[m[32mfrom datetime import datetime, timezone[m
+[32m+[m
+[32m+[m[32mfrom app.config import settings[m
+[32m+[m[32mfrom app.models.student import StudentAcademicData[m
+[32m+[m[32mfrom app.models.risk import RiskReport, RiskReason, Intervention, RiskLevel[m
+[32m+[m[32mfrom app.services.risk_rules import RISK_RULES[m
+[32m+[m[32mfrom app.utils.stats import compute_all_stats[m
+[32m+[m
+[32m+[m
+[32m+[m[32m# Priority sort order[m
+[32m+[m[32m_PRIORITY_ORDER = {"URGENT": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}[m
+[32m+[m[32m# Severity sort order[m
+[32m+[m[32m_SEVERITY_ORDER = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef analyse_risk(data: StudentAcademicData) -> RiskReport:[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Main entry point.[m
+[32m+[m[32m    Accepts a StudentAcademicData object and returns a RiskReport.[m
+[32m+[m[32m    """[m
+[32m+[m[32m    # ── Step 1: compute all statistics ───────────────────────────────────────[m
+[32m+[m[32m    stats = compute_all_stats(data)[m
+[32m+[m
+[32m+[m[32m    # ── Step 2: evaluate every rule ───────────────────────────────────────────[m
+[32m+[m[32m    triggered: list[dict] = [[m
+[32m+[m[32m        rule for rule in RISK_RULES[m
+[32m+[m[32m        if rule["check"](stats)[m
+[32m+[m[32m    ][m
+[32m+[m
+[32m+[m[32m    # ── Step 3: risk score ────────────────────────────────────────────────────[m
+[32m+[m[32m    raw_score  = sum(r["score_weight"] for r in triggered)[m
+[32m+[m[32m    risk_score = float(min(raw_score, 100))[m
+[32m+[m
+[32m+[m[32m    # ── Step 4: risk level ────────────────────────────────────────────────────[m
+[32m+[m[32m    risk_level: RiskLevel[m
+[32m+[m[32m    if risk_score >= settings.HIGH_RISK_THRESHOLD:[m
+[32m+[m[32m        risk_level = "HIGH"[m
+[32m+[m[32m    elif risk_score >= settings.MEDIUM_RISK_THRESHOLD:[m
+[32m+[m[32m        risk_level = "MEDIUM"[m
+[32m+[m[32m    elif risk_score > 0:[m
+[32m+[m[32m        risk_level = "LOW"[m
+[32m+[m[32m    else:[m
+[32m+[m[32m        risk_level = "NONE"[m
+[32m+[m
+[32m+[m[32m    # ── Step 5a: build reasons (sorted HIGH → MEDIUM → LOW) ──────────────────[m
+[32m+[m[32m    reasons = sorted([m
+[32m+[m[32m        [[m
+[32m+[m[32m            RiskReason([m
+[32m+[m[32m                code        = r["code"],[m
+[32m+[m[32m                description = r["description"],[m
+[32m+[m[32m                severity    = r["severity"],[m
+[32m+[m[32m            )[m
+[32m+[m[32m            for r in triggered[m
+[32m+[m[32m        ],[m
+[32m+[m[32m        key=lambda x: _SEVERITY_ORDER.get(x.severity, 99),[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    # ── Step 5b: build recommendations (deduplicated, sorted by priority) ─────[m
+[32m+[m[32m    seen_types: set[str] = set()[m
+[32m+[m[32m    recommendations: list[Intervention] = [][m
+[32m+[m
+[32m+[m[32m    for rule in sorted([m
+[32m+[m[32m        triggered,[m
+[32m+[m[32m        key=lambda r: _PRIORITY_ORDER.get(r["intervention"]["priority"], 99),[m
+[32m+[m[32m    ):[m
+[32m+[m[32m        iv   = rule["intervention"][m
+[32m+[m[32m        itype = iv["type"][m
+[32m+[m[32m        if itype not in seen_types:[m
+[32m+[m[32m            seen_types.add(itype)[m
+[32m+[m[32m            recommendations.append([m
+[32m+[m[32m                Intervention([m
+[32m+[m[32m                    type        = itype,[m
+[32m+[m[32m                    description = iv["description"],[m
+[32m+[m[32m                    priority    = iv["priority"],[m
+[32m+[m[32m                )[m
+[32m+[m[32m            )[m
+[32m+[m
+[32m+[m[32m    # ── Step 6: assemble report ───────────────────────────────────────────────[m
+[32m+[m[32m    return RiskReport([m
+[32m+[m[32m        student_id            = data.student_id,[m
+[32m+[m[32m        student_name          = data.student_name,[m
+[32m+[m[32m        risk_level            = risk_level,[m
+[32m+[m[32m        risk_score            = risk_score,[m
+[32m+[m[32m        reasons               = reasons,[m
+[32m+[m[32m        recommendations       = recommendations,[m
+[32m+[m[32m        average_mark          = stats["average_mark"],[m
+[32m+[m[32m        attendance_pct        = stats["attendance_pct"],[m
+[32m+[m[32m        lms_logins_per_week   = stats["lms_logins_per_week"],[m
+[32m+[m[32m        missed_assessments    = stats["missed_assessments"],[m
+[32m+[m[32m        missed_tutor_sessions = stats["missed_tutor_sessions"],[m
+[32m+[m[32m        failed_modules        = stats["failed_modules"],[m
+[32m+[m[32m        module_marks          = stats["module_marks"],[m
+[32m+[m[32m        analysed_at           = datetime.now(timezone.utc).isoformat(),[m
+[32m+[m[32m    )[m
+[1mdiff --git a/ai-service/app/services/risk_rules.py b/ai-service/app/services/risk_rules.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..7df6f1d[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/services/risk_rules.py[m
+[36m@@ -0,0 +1,164 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mConfigurable academic risk rules.[m
+[32m+[m
+[32m+[m[32mEach rule is a dict with:[m
+[32m+[m[32m  code          – unique identifier (matches risk_rules table in Supabase)[m
+[32m+[m[32m  description   – human-readable label shown in the report[m
+[32m+[m[32m  severity      – HIGH | MEDIUM | LOW[m
+[32m+[m[32m  score_weight  – contribution to the 0-100 risk score[m
+[32m+[m[32m  check         – callable(stats: dict) -> bool[m
+[32m+[m[32m  intervention  – the recommended action if this rule fires[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom typing import Any[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef _make_rule([m
+[32m+[m[32m    code: str,[m
+[32m+[m[32m    description: str,[m
+[32m+[m[32m    severity: str,[m
+[32m+[m[32m    score_weight: int,[m
+[32m+[m[32m    check,[m
+[32m+[m[32m    intervention: dict[str, Any],[m
+[32m+[m[32m) -> dict:[m
+[32m+[m[32m    return {[m
+[32m+[m[32m        "code":         code,[m
+[32m+[m[32m        "description":  description,[m
+[32m+[m[32m        "severity":     severity,[m
+[32m+[m[32m        "score_weight": score_weight,[m
+[32m+[m[32m        "check":        check,[m
+[32m+[m[32m        "intervention": intervention,[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m
+[32m+[m[32mRISK_RULES: list[dict] = [[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "AVERAGE_BELOW_40",[m
+[32m+[m[32m        description  = "Average mark below 40%",[m
+[32m+[m[32m        severity     = "HIGH",[m
+[32m+[m[32m        score_weight = 30,[m
+[32m+[m[32m        check        = lambda s: s["average_mark"] < 40,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Academic Support",[m
+[32m+[m[32m            "description": "Refer student to academic tutor for urgent support",[m
+[32m+[m[32m            "priority":    "URGENT",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "MISSED_3_ASSESSMENTS",[m
+[32m+[m[32m        description  = "Missed three or more assessments",[m
+[32m+[m[32m        severity     = "HIGH",[m
+[32m+[m[32m        score_weight = 25,[m
+[32m+[m[32m        check        = lambda s: s["missed_assessments"] >= 3,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Assessment Follow-up",[m
+[32m+[m[32m            "description": "Notify lecturer; schedule missed assessment review with student",[m
+[32m+[m[32m            "priority":    "HIGH",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "ATTENDANCE_BELOW_60",[m
+[32m+[m[32m        description  = "Attendance below 60%",[m
+[32m+[m[32m        severity     = "HIGH",[m
+[32m+[m[32m        score_weight = 20,[m
+[32m+[m[32m        check        = lambda s: s["attendance_pct"] < 60,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Attendance Management",[m
+[32m+[m[32m            "description": "Issue formal attendance warning letter and contact student",[m
+[32m+[m[32m            "priority":    "HIGH",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "MULTIPLE_FAILED_MODULES",[m
+[32m+[m[32m        description  = "Failing two or more modules (average below 50%)",[m
+[32m+[m[32m        severity     = "HIGH",[m
+[32m+[m[32m        score_weight = 25,[m
+[32m+[m[32m        check        = lambda s: s["failed_modules"] >= 2,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Academic Advisor Referral",[m
+[32m+[m[32m            "description": "Schedule urgent academic advisor meeting; consider module repetition options",[m
+[32m+[m[32m            "priority":    "URGENT",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "NO_LMS_ACTIVITY_2WEEKS",[m
+[32m+[m[32m        description  = "No LMS activity recorded for two or more consecutive weeks",[m
+[32m+[m[32m        severity     = "HIGH",[m
+[32m+[m[32m        score_weight = 18,[m
+[32m+[m[32m        check        = lambda s: s["lms_logins_per_week"] == 0,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Digital Engagement",[m
+[32m+[m[32m            "description": "Contact student urgently; check for connectivity or personal issues",[m
+[32m+[m[32m            "priority":    "HIGH",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "AVERAGE_BELOW_50",[m
+[32m+[m[32m        description  = "Average mark below 50% (at risk of failing all modules)",[m
+[32m+[m[32m        severity     = "MEDIUM",[m
+[32m+[m[32m        score_weight = 15,[m
+[32m+[m[32m        check        = lambda s: 40 <= s["average_mark"] < 50,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Supplementary Tutorials",[m
+[32m+[m[32m            "description": "Enroll student in supplementary tutorial programme",[m
+[32m+[m[32m            "priority":    "HIGH",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "LOW_LMS_ACTIVITY",[m
+[32m+[m[32m        description  = "Fewer than two LMS logins per week on average",[m
+[32m+[m[32m        severity     = "MEDIUM",[m
+[32m+[m[32m        score_weight = 10,[m
+[32m+[m[32m        check        = lambda s: 0 < s["lms_logins_per_week"] < 2,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Digital Engagement",[m
+[32m+[m[32m            "description": "Send LMS engagement reminder; encourage use of online resources",[m
+[32m+[m[32m            "priority":    "MEDIUM",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "MISSED_TUTOR_SESSIONS",[m
+[32m+[m[32m        description  = "Missed two or more tutor support sessions",[m
+[32m+[m[32m        severity     = "MEDIUM",[m
+[32m+[m[32m        score_weight = 10,[m
+[32m+[m[32m        check        = lambda s: s["missed_tutor_sessions"] >= 2,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Tutor Referral",[m
+[32m+[m[32m            "description": "Re-enroll student in tutor support programme; follow up attendance",[m
+[32m+[m[32m            "priority":    "MEDIUM",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "ATTENDANCE_BELOW_75",[m
+[32m+[m[32m        description  = "Attendance below 75% (approaching compulsory minimum)",[m
+[32m+[m[32m        severity     = "MEDIUM",[m
+[32m+[m[32m        score_weight = 8,[m
+[32m+[m[32m        check        = lambda s: 60 <= s["attendance_pct"] < 75,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Attendance Warning",[m
+[32m+[m[32m            "description": "Send informal attendance reminder to student",[m
+[32m+[m[32m            "priority":    "MEDIUM",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m
+[32m+[m[32m    _make_rule([m
+[32m+[m[32m        code         = "LOW_ENGAGEMENT",[m
+[32m+[m[32m        description  = "Low student engagement (fewer than 3 recorded activities)",[m
+[32m+[m[32m        severity     = "MEDIUM",[m
+[32m+[m[32m        score_weight = 5,[m
+[32m+[m[32m        check        = lambda s: s["total_engagement"] < 3,[m
+[32m+[m[32m        intervention = {[m
+[32m+[m[32m            "type":        "Student Wellness",[m
+[32m+[m[32m            "description": "Refer to student support services for wellness and engagement check",[m
+[32m+[m[32m            "priority":    "LOW",[m
+[32m+[m[32m        },[m
+[32m+[m[32m    ),[m
+[32m+[m[32m][m
+[1mdiff --git a/ai-service/app/utils/__init__.py b/ai-service/app/utils/__init__.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e69de29[m
+[1mdiff --git a/ai-service/app/utils/stats.py b/ai-service/app/utils/stats.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..556d65c[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/app/utils/stats.py[m
+[36m@@ -0,0 +1,103 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mStatistical computation helpers.[m
+[32m+[m[32mAll functions accept StudentAcademicData and return clean numeric values.[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m[32mfrom typing import TYPE_CHECKING[m
+[32m+[m
+[32m+[m[32mif TYPE_CHECKING:[m
+[32m+[m[32m    from app.models.student import StudentAcademicData[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_average_mark(data: "StudentAcademicData") -> float:[m
+[32m+[m[32m    """Mean percentage mark across all assessments."""[m
+[32m+[m[32m    if not data.marks:[m
+[32m+[m[32m        return 0.0[m
+[32m+[m[32m    percentages = [m.percentage for m in data.marks][m
+[32m+[m[32m    return round(sum(percentages) / len(percentages), 2)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_attendance_pct(data: "StudentAcademicData") -> float:[m
+[32m+[m[32m    """Overall attendance percentage across all modules."""[m
+[32m+[m[32m    total    = sum(a.sessions_total    for a in data.attendance)[m
+[32m+[m[32m    attended = sum(a.sessions_attended for a in data.attendance)[m
+[32m+[m[32m    if total == 0:[m
+[32m+[m[32m        return 0.0[m
+[32m+[m[32m    return round((attended / total) * 100, 2)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_lms_logins_per_week(data: "StudentAcademicData") -> float:[m
+[32m+[m[32m    """Average LMS logins per week."""[m
+[32m+[m[32m    if not data.lms_activity:[m
+[32m+[m[32m        return 0.0[m
+[32m+[m[32m    total_logins = sum(l.login_count for l in data.lms_activity)[m
+[32m+[m[32m    weeks        = len(data.lms_activity)[m
+[32m+[m[32m    return round(total_logins / weeks, 2)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_missed_assessments(data: "StudentAcademicData") -> int:[m
+[32m+[m[32m    """Number of assessments not submitted."""[m
+[32m+[m[32m    return sum(1 for s in data.assessment_submissions if not s.submitted)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_missed_tutor_sessions(data: "StudentAcademicData") -> int:[m
+[32m+[m[32m    """Number of tutor sessions not attended."""[m
+[32m+[m[32m    return sum(1 for t in data.tutor_sessions if not t.attended)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_total_engagement(data: "StudentAcademicData") -> int:[m
+[32m+[m[32m    """Total engagement event count."""[m
+[32m+[m[32m    return sum(e.count for e in data.engagement)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_failed_modules(data: "StudentAcademicData") -> int:[m
+[32m+[m[32m    """Modules where the student's mark is below 50%."""[m
+[32m+[m[32m    seen: set[str] = set()[m
+[32m+[m[32m    failed = 0[m
+[32m+[m[32m    for m in data.marks:[m
+[32m+[m[32m        if m.module_code not in seen:[m
+[32m+[m[32m            seen.add(m.module_code)[m
+[32m+[m[32m            if m.percentage < 50:[m
+[32m+[m[32m                failed += 1[m
+[32m+[m[32m    return failed[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_module_mark_summary(data: "StudentAcademicData") -> list[dict]:[m
+[32m+[m[32m    """[m
+[32m+[m[32m    Per-module average mark as a list of dicts – used by the frontend charts.[m
+[32m+[m[32m    """[m
+[32m+[m[32m    module_marks: dict[str, list[float]] = {}[m
+[32m+[m[32m    module_names: dict[str, str]         = {}[m
+[32m+[m
+[32m+[m[32m    for m in data.marks:[m
+[32m+[m[32m        if m.module_code not in module_marks:[m
+[32m+[m[32m            module_marks[m.module_code] = [][m
+[32m+[m[32m            module_names[m.module_code]  = m.module_name[m
+[32m+[m[32m        module_marks[m.module_code].append(m.percentage)[m
+[32m+[m
+[32m+[m[32m    result = [][m
+[32m+[m[32m    for code, pcts in module_marks.items():[m
+[32m+[m[32m        avg = round(sum(pcts) / len(pcts), 2)[m
+[32m+[m[32m        result.append({[m
+[32m+[m[32m            "module_code":  code,[m
+[32m+[m[32m            "module_name":  module_names[code],[m
+[32m+[m[32m            "average_pct":  avg,[m
+[32m+[m[32m            "status":       "FAIL" if avg < 50 else ("AT_RISK" if avg < 60 else "PASS"),[m
+[32m+[m[32m            "assessments":  len(pcts),[m
+[32m+[m[32m        })[m
+[32m+[m
+[32m+[m[32m    return sorted(result, key=lambda x: x["average_pct"])[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef compute_all_stats(data: "StudentAcademicData") -> dict:[m
+[32m+[m[32m    """Compute every derived statistic in one call."""[m
+[32m+[m[32m    return {[m
+[32m+[m[32m        "average_mark":          compute_average_mark(data),[m
+[32m+[m[32m        "attendance_pct":        compute_attendance_pct(data),[m
+[32m+[m[32m        "lms_logins_per_week":   compute_lms_logins_per_week(data),[m
+[32m+[m[32m        "missed_assessments":    compute_missed_assessments(data),[m
+[32m+[m[32m        "missed_tutor_sessions": compute_missed_tutor_sessions(data),[m
+[32m+[m[32m        "total_engagement":      compute_total_engagement(data),[m
+[32m+[m[32m        "failed_modules":        compute_failed_modules(data),[m
+[32m+[m[32m        "module_marks":          compute_module_mark_summary(data),[m
+[32m+[m[32m    }[m
+[1mdiff --git a/ai-service/main.py b/ai-service/main.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..98d3add[m
+[1m--- /dev/null[m
+[1m+++ b/ai-service/main.py[m
+[36m@@ -0,0 +1,57 @@[m
+[32m+[m[32m"""[m
+[32m+[m[32mTUT Academic Risk Early Warning – Python FastAPI AI Service[m
+[32m+[m[32mStart: uvicorn main:app --reload --port 8000[m
+[32m+[m[32mDocs:  http://localhost:8000/docs[m
+[32m+[m[32m"""[m
+[32m+[m[32mfrom fastapi import FastAPI, Request[m
+[32m+[m[32mfrom fastapi.middleware.cors import CORSMiddleware[m
+[32m+[m[32mfrom fastapi.responses import JSONResponse[m
+[32m+[m[32mimport logging[m
+[32m+[m
+[32m+[m[32mfrom app.config import settings[m
+[32m+[m[32mfrom app.routes import risk, health[m
+[32m+[m
+[32m+[m[32m# ── Logging ───────────────────────────────────────────────────────────────────[m
+[32m+[m[32mlogging.basicConfig([m
+[32m+[m[32m    level=logging.DEBUG if settings.DEBUG else logging.INFO,[m
+[32m+[m[32m    format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",[m
+[32m+[m[32m)[m
+[32m+[m[32mlogger = logging.getLogger("tut_rew")[m
+[32m+[m
+[32m+[m[32m# ── App ───────────────────────────────────────────────────────────────────────[m
+[32m+[m[32mapp = FastAPI([m
+[32m+[m[32m    title       = settings.APP_NAME,[m
+[32m+[m[32m    description = ([m
+[32m+[m[32m        "AI Risk Analysis Engine for Tshwane University of Technology. "[m
+[32m+[m[32m        "Called exclusively by the Node.js backend – not directly by the browser."[m
+[32m+[m[32m    ),[m
+[32m+[m[32m    version     = settings.APP_VERSION,[m
+[32m+[m[32m    docs_url    = "/docs",[m
+[32m+[m[32m    redoc_url   = "/redoc",[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m[32m# ── CORS – only the Node.js backend may call this service ────────────────────[m
+[32m+[m[32mapp.add_middleware([m
+[32m+[m[32m    CORSMiddleware,[m
+[32m+[m[32m    allow_origins  = [settings.NODE_BACKEND_URL],[m
+[32m+[m[32m    allow_methods  = ["GET", "POST"],[m
+[32m+[m[32m    allow_headers  = ["*"],[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m[32m# ── Global exception handler ─────────────────────────────────────────────────[m
+[32m+[m[32m@app.exception_handler(Exception)[m
+[32m+[m

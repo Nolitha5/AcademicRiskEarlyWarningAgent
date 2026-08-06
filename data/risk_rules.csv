@@ -1,0 +1,2 @@
+rule_id,rule,risk,points
+R001,Average below 40,High,40
