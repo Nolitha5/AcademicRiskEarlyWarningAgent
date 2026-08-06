@@ -23,28 +23,13 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white flex flex-col">
       {/* Nav */}
-      <header className="flex items-center justify-between px-8 py-5 max-w-7xl mx-auto w-full">
+      <header className="flex items-center px-8 py-5 max-w-7xl mx-auto w-full">
         {/* Logo — no TUT text */}
         <div className="flex items-center gap-2 font-bold text-xl">
           <ShieldAlert className="text-blue-400" size={22} />
           <span>REW</span>
         </div>
 
-        {/* Nav login options */}
-        <div className="flex gap-3">
-          <Link
-            to="/admin-login"
-            className="px-4 py-2 rounded-lg text-sm font-medium text-slate-300 hover:text-white border border-slate-600 hover:border-slate-400 transition-colors"
-          >
-            Admin Login
-          </Link>
-          <Link
-            to="/student-login"
-            className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-sm font-semibold transition-colors"
-          >
-            Student Login
-          </Link>
-        </div>
       </header>
 
       {/* Hero */}
