@@ -1,5 +1,6 @@
 import { asyncHandler } from '../utils/asyncHandler.js'
-import * as riskService from '../services/riskService.js'
+import * as riskService    from '../services/riskService.js'
+import * as studentService from '../services/studentService.js'
 import { checkAiServiceHealth } from '../services/aiService.js'
 
 /** GET /api/risk – all latest reports (admin dashboard) */
@@ -14,7 +15,42 @@ export const getRiskSummary = asyncHandler(async (_req, res) => {
   res.json({ success: true, data })
 })
 
-/** GET /api/risk/:studentId – latest report for a student */
+/**
+ * GET /api/risk/my-report
+ *
+ * Securely returns the latest risk report for the currently authenticated student.
+ * The student identity is derived entirely from the verified Supabase JWT — the
+ * client never supplies a student ID, so cross-student access is impossible.
+ *
+ * Lookup chain:
+ *   JWT → auth_user_id → students.id → risk_reports.student_id
+ */
+export const getMyRiskReport = asyncHandler(async (req, res) => {
+  const authUserId = req.user.id
+  const authEmail  = req.user.email
+
+  // Resolve student securely from the authenticated user
+  let student = await studentService.getStudentByAuthUserId(authUserId)
+  if (!student && authEmail) {
+    student = await studentService.getStudentByEmail(authEmail, authUserId)
+  }
+  if (!student) {
+    return res.status(404).json({
+      error: 'No student profile found for your account. Please contact your administrator.',
+    })
+  }
+
+  const report = await riskService.getLatestRiskReport(student.id)
+  if (!report) {
+    return res.status(404).json({
+      error: 'No risk report found. Please ask your administrator to run an analysis.',
+    })
+  }
+
+  res.json({ success: true, data: report })
+})
+
+/** GET /api/risk/:studentId – latest report for a student (admin use) */
 export const getStudentRisk = asyncHandler(async (req, res) => {
   const data = await riskService.getLatestRiskReport(req.params.studentId)
   if (!data) return res.status(404).json({ error: 'No risk report found. Run analysis first.' })

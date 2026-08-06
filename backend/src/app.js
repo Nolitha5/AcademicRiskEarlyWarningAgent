@@ -7,6 +7,7 @@ import { errorHandler }  from './middleware/errorHandler.js'
 import { authMiddleware } from './middleware/auth.js'
 
 // Routes
+import studentAuthRoutes  from './routes/studentAuth.js'   // public — must be before authMiddleware
 import studentRoutes      from './routes/students.js'
 import moduleRoutes       from './routes/modules.js'
 import attendanceRoutes   from './routes/attendance.js'
@@ -35,7 +36,12 @@ app.get('/health', (_req, res) =>
   res.json({ status: 'ok', service: 'TUT REW API', timestamp: new Date().toISOString() })
 )
 
-// ── All API routes are JWT-protected ────────────────────────────────────────
+// ── Student auth (public — verify + activate, BEFORE JWT middleware) ─────────
+// POST /api/student-auth/verify   – validate student record before signUp
+// POST /api/student-auth/activate – link auth_user_id after signUp (needs its own JWT check)
+app.use('/api/student-auth', studentAuthRoutes)
+
+// ── All other API routes are JWT-protected ────────────────────────────────────
 app.use('/api', authMiddleware)
 
 app.use('/api/students',       studentRoutes)

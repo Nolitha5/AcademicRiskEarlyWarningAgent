@@ -1,10 +1,18 @@
 import { Router } from 'express'
-import { listStudents, getStudent, getStudentProfile } from '../controllers/studentController.js'
+import {
+  listStudents,
+  getMyStudent,
+  getStudent,
+  getStudentProfile,
+} from '../controllers/studentController.js'
 
 const router = Router()
 
-// GET /api/students?q=search
+// GET /api/students?q=search  or  ?email=
 router.get('/', listStudents)
+
+// GET /api/students/me  — must be before /:id to prevent 'me' matching as a UUID
+router.get('/me', getMyStudent)
 
 // GET /api/students/:id
 router.get('/:id', getStudent)

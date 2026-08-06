@@ -4,27 +4,35 @@ import Layout from '../components/common/Layout'
 import RiskBadge from '../components/common/RiskBadge'
 import StatCard from '../components/common/StatCard'
 import api from '../lib/api'
-import { supabase } from '../lib/supabase'
-import { BookOpen, Activity, Monitor, AlertTriangle, ChevronRight } from 'lucide-react'
-
-interface RiskReport {
-  risk_level:   'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'
-  risk_score:   number
-  average_mark: number
-  attendance_pct: number
-  lms_logins_per_week: number
-  missed_assessments: number
-  reasons: { code: string; description: string; severity: string }[]
-  recommendations: { type: string; description: string; priority: string }[]
-  analysed_at: string
-}
+import {
+  BookOpen,
+  Activity,
+  Monitor,
+  AlertTriangle,
+  UserCheck,
+  ChevronRight,
+} from 'lucide-react'
 
 interface Student {
-  id: string
-  full_name: string
+  id:             string
+  full_name:      string
   student_number: string
-  programme: string
-  year_of_study: number
+  programme:      string
+  faculty:        string
+  year_of_study:  number
+}
+
+interface RiskReport {
+  risk_level:            'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'
+  risk_score:            number
+  average_mark:          number
+  attendance_pct:        number
+  lms_logins_per_week:   number
+  missed_assessments:    number
+  missed_tutor_sessions: number
+  reasons:               { code: string; description: string; severity: string }[]
+  recommendations:       { type: string; description: string; priority: string }[]
+  analysed_at:           string
 }
 
 export default function StudentDashboard() {
@@ -38,25 +46,20 @@ export default function StudentDashboard() {
     async function load() {
       setLoading(true)
       try {
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) return
-
-        // Find the student record linked to this user's email
-        const studRes = await api.get(`/students?email=${encodeURIComponent(user.email ?? '')}`)
-        const students = studRes.data.data ?? []
-        if (!students.length) {
-          setError('No student profile found for your account. Please contact your administrator.')
-          return
-        }
-        const s = students[0]
+        // ── Secure student lookup: derived from JWT on the server ─────────
+        // The server resolves: JWT → auth_user_id → students.id
+        // The client never passes a student ID — cross-student access is impossible.
+        const studRes = await api.get('/students/me')
+        const s: Student = studRes.data.data
         setStudent(s)
 
-        // Load their latest risk report
+        // ── Load the student's own risk report ────────────────────────────
+        // Server uses the same JWT-to-student chain; no student ID in the URL.
         try {
-          const riskRes = await api.get(`/risk/${s.id}`)
+          const riskRes = await api.get('/risk/my-report')
           setReport(riskRes.data.data)
         } catch {
-          // No report yet — that's fine
+          // No report yet — that's fine, show the empty state below
         }
       } catch (err: any) {
         setError(err.response?.data?.error ?? err.message)
@@ -111,7 +114,10 @@ export default function StudentDashboard() {
           <div>
             <h1 className="text-2xl font-bold text-slate-800">{student.full_name}</h1>
             <p className="text-sm text-slate-500 mt-0.5">
-              {student.student_number} · {student.programme} · Year {student.year_of_study}
+              {student.student_number}
+              {student.programme  && <> · {student.programme}</>}
+              {student.faculty    && <> · {student.faculty}</>}
+              {student.year_of_study && <> · Year {student.year_of_study}</>}
             </p>
           </div>
           <div className="flex gap-3 flex-wrap">
@@ -136,7 +142,7 @@ export default function StudentDashboard() {
       {/* Stats */}
       {report && (
         <>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-6">
             <StatCard
               label="Average Mark"
               value={`${report.average_mark?.toFixed(1)}%`}
@@ -161,6 +167,12 @@ export default function StudentDashboard() {
               icon={<AlertTriangle size={18} />}
               color={report.missed_assessments === 0 ? 'green' : 'red'}
             />
+            <StatCard
+              label="Missed Tutor Sessions"
+              value={report.missed_tutor_sessions ?? 0}
+              icon={<UserCheck size={18} />}
+              color={(report.missed_tutor_sessions ?? 0) === 0 ? 'green' : 'amber'}
+            />
           </div>
 
           {/* Risk card */}
@@ -169,7 +181,10 @@ export default function StudentDashboard() {
               <p className="text-sm text-slate-500 mb-1">Current Risk Level</p>
               <div className="flex items-center gap-3">
                 <RiskBadge level={report.risk_level} />
-                <span className="text-3xl font-bold text-slate-800">{report.risk_score?.toFixed(0)}<span className="text-lg text-slate-400">/100</span></span>
+                <span className="text-3xl font-bold text-slate-800">
+                  {report.risk_score?.toFixed(0)}
+                  <span className="text-lg text-slate-400">/100</span>
+                </span>
               </div>
               <p className="text-xs text-slate-400 mt-1">
                 Last analysed: {new Date(report.analysed_at).toLocaleString()}
@@ -183,7 +198,7 @@ export default function StudentDashboard() {
             </Link>
           </div>
 
-          {/* Reasons */}
+          {/* Risk Factors */}
           {report.reasons?.length > 0 && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
               <h2 className="text-base font-semibold text-slate-800 mb-3">Risk Factors</h2>
@@ -191,9 +206,12 @@ export default function StudentDashboard() {
                 {report.reasons.map(r => (
                   <li key={r.code} className="flex items-start gap-2 text-sm">
                     <span className={`mt-0.5 inline-flex px-1.5 py-0.5 rounded text-xs font-semibold ${
-                      r.severity === 'HIGH' ? 'bg-red-100 text-red-700' :
-                      r.severity === 'MEDIUM' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'
-                    }`}>{r.severity}</span>
+                      r.severity === 'HIGH'   ? 'bg-red-100 text-red-700' :
+                      r.severity === 'MEDIUM' ? 'bg-amber-100 text-amber-700' :
+                                                'bg-slate-100 text-slate-600'
+                    }`}>
+                      {r.severity}
+                    </span>
                     <span className="text-slate-700">{r.description}</span>
                   </li>
                 ))}
@@ -207,7 +225,12 @@ export default function StudentDashboard() {
               <h2 className="text-base font-semibold text-slate-800 mb-3">Recommended Actions</h2>
               <div className="space-y-2">
                 {report.recommendations.map(rec => (
-                  <div key={rec.type} className={`border rounded-lg px-4 py-3 text-sm ${priorityColor[rec.priority] ?? 'bg-slate-50 border-slate-200 text-slate-700'}`}>
+                  <div
+                    key={rec.type}
+                    className={`border rounded-lg px-4 py-3 text-sm ${
+                      priorityColor[rec.priority] ?? 'bg-slate-50 border-slate-200 text-slate-700'
+                    }`}
+                  >
                     <span className="font-semibold uppercase text-xs tracking-wide">{rec.priority}</span>
                     <p className="mt-0.5">{rec.description}</p>
                   </div>
@@ -220,7 +243,9 @@ export default function StudentDashboard() {
 
       {!report && !loading && student && (
         <div className="bg-white rounded-xl border border-dashed border-slate-300 p-12 text-center">
-          <p className="text-slate-500 text-sm mb-3">No risk analysis has been run yet for your account.</p>
+          <p className="text-slate-500 text-sm mb-3">
+            No risk analysis has been run yet for your account.
+          </p>
           <button
             onClick={runAnalysis}
             disabled={running}

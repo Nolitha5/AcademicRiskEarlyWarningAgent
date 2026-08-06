@@ -1,6 +1,6 @@
 import { supabase } from '../config/supabase.js'
 
-/** Fetch all active students with summary stats from views */
+/** Fetch all active students */
 export async function getAllStudents() {
   const { data, error } = await supabase
     .from('students')
@@ -18,6 +18,38 @@ export async function getStudentById(id) {
     .select('*')
     .eq('id', id)
     .single()
+  if (error) throw error
+  return data
+}
+
+/**
+ * Find a student by their student number.
+ * Used during registration to verify the student record exists before creating
+ * a Supabase Auth account.
+ */
+export async function getStudentByNumber(studentNumber) {
+  const { data, error } = await supabase
+    .from('students')
+    .select('*')
+    .eq('student_number', studentNumber)
+    .eq('is_active', true)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+/**
+ * Find a student by their linked Supabase Auth user ID.
+ * This is the secure, primary lookup used after a student account is activated.
+ * It ensures students can only access their own record.
+ */
+export async function getStudentByAuthUserId(authUserId) {
+  const { data, error } = await supabase
+    .from('students')
+    .select('*')
+    .eq('auth_user_id', authUserId)
+    .eq('is_active', true)
+    .maybeSingle()
   if (error) throw error
   return data
 }

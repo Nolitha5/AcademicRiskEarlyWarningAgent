@@ -3,6 +3,8 @@ import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
 
 import LandingPage       from './pages/LandingPage'
+import AdminLoginPage    from './pages/AdminLoginPage'
+import StudentLoginPage  from './pages/StudentLoginPage'
 import LoginPage         from './pages/LoginPage'
 import RegisterPage      from './pages/RegisterPage'
 import StudentDashboard  from './pages/StudentDashboard'
@@ -17,9 +19,13 @@ function App() {
       <AuthProvider>
         <Routes>
           {/* Public */}
-          <Route path="/"         element={<LandingPage />} />
-          <Route path="/login"    element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/"              element={<LandingPage />} />
+          <Route path="/admin-login"   element={<AdminLoginPage />} />
+          <Route path="/student-login" element={<StudentLoginPage />} />
+          <Route path="/register"      element={<RegisterPage />} />
+
+          {/* Legacy /login — kept for backward compatibility */}
+          <Route path="/login"         element={<LoginPage />} />
 
           {/* Protected */}
           <Route element={<ProtectedRoute />}>
