@@ -1,18 +1,12 @@
 import { ReactNode } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { BookOpen, LayoutDashboard, LogOut, ShieldAlert, Users } from 'lucide-react'
 import clsx from 'clsx'
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
-  const navigate = useNavigate()
   const { pathname } = useLocation()
-
-  async function handleLogout() {
-    await logout()
-    navigate('/login')
-  }
 
   const isAdmin = user?.email?.includes('admin') || user?.user_metadata?.role === 'admin'
 
@@ -52,7 +46,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-400 hidden sm:block">{user?.email}</span>
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-red-600 transition-colors"
             >
               <LogOut size={16} />
