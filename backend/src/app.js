@@ -41,6 +41,15 @@ app.get('/health', (_req, res) =>
 // POST /api/student-auth/activate – link auth_user_id after signUp (needs its own JWT check)
 app.use('/api/student-auth', studentAuthRoutes)
 
+// ── Developer testing routes (dev only, public — BEFORE JWT middleware) ───────
+// GET  /dev/test-token  – generate 5-digit one-time code
+// GET  /dev/students    – list active students for selector UI
+// POST /dev/test-login  – exchange code + student for a real Supabase session token
+if (process.env.NODE_ENV !== 'production') {
+  const { default: devRoutes } = await import('./routes/dev.js')
+  app.use('/dev', devRoutes)
+}
+
 // ── All other API routes are JWT-protected ────────────────────────────────────
 app.use('/api', authMiddleware)
 
