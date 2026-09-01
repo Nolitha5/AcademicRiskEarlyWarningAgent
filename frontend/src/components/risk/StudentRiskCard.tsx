@@ -35,7 +35,7 @@ export function StudentRiskCard(p: Props) {
       </div>
 
       <div className="mt-4 flex items-center gap-4 flex-wrap">
-        <RiskBadge level={p.risk_level as 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'} size="sm" />
+        <RiskBadge level={p.risk_level as 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'} />
         <span className="text-xs text-gray-500">Score: <b>{p.risk_score?.toFixed(0)}%</b></span>
         {p.average_mark != null && (
           <span className="text-xs text-gray-500">Avg Mark: <b>{p.average_mark?.toFixed(1)}%</b></span>

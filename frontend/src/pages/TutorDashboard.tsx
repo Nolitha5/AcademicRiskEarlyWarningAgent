@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import AppLayout from '../layouts/AppLayout'
+import Layout from '../components/common/Layout'
 import StatCard from '../components/common/StatCard'
 import RiskBadge from '../components/common/RiskBadge'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
-import { studentsApi, riskApi } from '../services/api'
-import { supabase } from '../services/supabaseClient'
+import api from '../lib/api'
+import { supabase } from '../lib/supabase'
 import { Users, AlertTriangle, CalendarCheck, Clock, CheckCircle, XCircle } from 'lucide-react'
 
 interface TutorSession {
@@ -45,14 +45,13 @@ export default function TutorDashboard() {
       try {
         setLoading(true)
         const [studRes, riskRes] = await Promise.all([
-          studentsApi.list(),
-          riskApi.listAll(),
+          api.get('/students'),
+          api.get('/risk'),
         ])
 
         const students: any[] = studRes.data?.data ?? []
         const risks: any[] = riskRes.data?.data ?? []
 
-        // Build at-risk list (HIGH or MEDIUM)
         const riskMap = Object.fromEntries(risks.map((r: any) => [r.student_id, r]))
         const atRiskStudents: AtRiskStudent[] = students
           .map((s) => {
@@ -69,7 +68,6 @@ export default function TutorDashboard() {
           .filter((s) => s.risk_level === 'HIGH' || s.risk_level === 'MEDIUM')
           .sort((a, b) => b.risk_score - a.risk_score)
 
-        // Load tutor sessions from Supabase directly
         const { data: sessionData, error: sessErr } = await supabase
           .from('tutor_support')
           .select(`
@@ -97,7 +95,6 @@ export default function TutorDashboard() {
           notes: row.notes,
         }))
 
-        // Patch last_session into atRisk
         const lastSessionByStudent = Object.fromEntries(
           sessRows.map((s) => [s.student_id, s.session_date])
         )
@@ -162,48 +159,44 @@ export default function TutorDashboard() {
     walkIn: 'Walk-in',
   }
 
-  if (loading) return <AppLayout><LoadingSpinner /></AppLayout>
-  if (error) return <AppLayout><ErrorMessage message={error} /></AppLayout>
+  if (loading) return <Layout><LoadingSpinner /></Layout>
+  if (error) return <Layout><ErrorMessage message={error} /></Layout>
 
   return (
-    <AppLayout>
+    <Layout>
       <div className="p-6 space-y-6">
-        {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-tut-blue">Tutor Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Tutor Dashboard</h1>
           <p className="text-gray-500 text-sm mt-1">
             Track student support sessions and monitor at-risk students
           </p>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-4 gap-4">
-          <StatCard label="At-Risk Students" value={atRisk.length} icon={<AlertTriangle className="w-5 h-5" />} color="red" />
-          <StatCard label="Total Sessions" value={totalSessions} icon={<CalendarCheck className="w-5 h-5" />} color="blue" />
-          <StatCard label="Attended" value={attended} icon={<CheckCircle className="w-5 h-5" />} color="green" />
-          <StatCard label="Missed" value={missed} icon={<XCircle className="w-5 h-5" />} color="red" />
+          <StatCard label="At-Risk Students" value={atRisk.length}    icon={<AlertTriangle className="w-5 h-5" />}  color="red" />
+          <StatCard label="Total Sessions"   value={totalSessions}    icon={<CalendarCheck className="w-5 h-5" />}  color="blue" />
+          <StatCard label="Attended"         value={attended}          icon={<CheckCircle className="w-5 h-5" />}    color="green" />
+          <StatCard label="Missed"           value={missed}            icon={<XCircle className="w-5 h-5" />}        color="red" />
         </div>
 
-        {/* Attendance rate bar */}
         <div className="bg-white rounded-xl border border-gray-200 p-4">
           <div className="flex justify-between items-center mb-2">
             <span className="text-sm font-medium text-gray-700">Session Attendance Rate</span>
-            <span className="text-sm font-bold text-tut-blue">{attendanceRate}%</span>
+            <span className="text-sm font-bold text-blue-700">{attendanceRate}%</span>
           </div>
           <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
             <div
               className={`h-3 rounded-full transition-all ${
-                attendanceRate >= 75 ? 'bg-green-500' : attendanceRate >= 50 ? 'bg-yellow-400' : 'bg-red-500'
+                attendanceRate >= 75 ? 'bg-green-500' : attendanceRate >= 50 ? 'bg-amber-400' : 'bg-red-500'
               }`}
               style={{ width: `${attendanceRate}%` }}
             />
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-1 border-b border-gray-200">
           {([
-            { key: 'at-risk', label: `At-Risk Students (${atRisk.length})` },
+            { key: 'at-risk',  label: `At-Risk Students (${atRisk.length})` },
             { key: 'upcoming', label: `Upcoming Sessions (${upcoming.length})` },
             { key: 'sessions', label: `Session History (${past.length})` },
           ] as { key: Tab; label: string }[]).map((tab) => (
@@ -212,7 +205,7 @@ export default function TutorDashboard() {
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab.key
-                  ? 'border-tut-blue text-tut-blue'
+                  ? 'border-blue-700 text-blue-700'
                   : 'border-transparent text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -221,7 +214,6 @@ export default function TutorDashboard() {
           ))}
         </div>
 
-        {/* At-risk students */}
         {activeTab === 'at-risk' && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
@@ -244,16 +236,16 @@ export default function TutorDashboard() {
                   </tr>
                 ) : (
                   atRisk.map((s) => (
-                    <tr key={s.id} className={`hover:bg-gray-50 ${s.risk_level === 'HIGH' ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-yellow-400'}`}>
+                    <tr key={s.id} className={`hover:bg-gray-50 ${s.risk_level === 'HIGH' ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-amber-400'}`}>
                       <td className="px-4 py-3">
                         <div className="font-medium text-gray-900">{s.full_name}</div>
                         <div className="text-xs text-gray-400 font-mono">{s.student_number}</div>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <RiskBadge level={s.risk_level as any} size="sm" />
+                        <RiskBadge level={s.risk_level as 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'} />
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <span className={`font-bold ${s.risk_score >= 70 ? 'text-red-600' : 'text-yellow-600'}`}>
+                        <span className={`font-bold ${s.risk_score >= 70 ? 'text-red-600' : 'text-amber-600'}`}>
                           {s.risk_score}
                         </span>
                         <span className="text-gray-400 text-xs">/100</span>
@@ -265,18 +257,8 @@ export default function TutorDashboard() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center gap-2">
-                          <Link
-                            to={`/students/${s.id}/profile`}
-                            className="text-xs px-2 py-1 bg-tut-light text-tut-blue rounded hover:bg-tut-blue hover:text-white transition-colors"
-                          >
-                            Profile
-                          </Link>
-                          <Link
-                            to={`/students/${s.id}/risk`}
-                            className="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-600 hover:text-white transition-colors"
-                          >
-                            Risk
-                          </Link>
+                          <Link to={`/students/${s.id}/profile`} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-700 hover:text-white transition-colors">Profile</Link>
+                          <Link to={`/students/${s.id}/risk`}    className="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-600 hover:text-white transition-colors">Risk</Link>
                         </div>
                       </td>
                     </tr>
@@ -287,7 +269,6 @@ export default function TutorDashboard() {
           </div>
         )}
 
-        {/* Upcoming sessions */}
         {activeTab === 'upcoming' && (
           <div className="space-y-3">
             {upcoming.length === 0 ? (
@@ -298,18 +279,18 @@ export default function TutorDashboard() {
             ) : (
               upcoming.map((s) => (
                 <div key={s.id} className="bg-white rounded-xl border border-gray-200 p-4 flex items-start gap-4">
-                  <div className="w-12 h-12 rounded-lg bg-tut-light flex flex-col items-center justify-center shrink-0">
-                    <span className="text-xs text-tut-blue font-bold">
+                  <div className="w-12 h-12 rounded-lg bg-blue-50 flex flex-col items-center justify-center shrink-0">
+                    <span className="text-xs text-blue-700 font-bold">
                       {new Date(s.session_date).toLocaleDateString('en-ZA', { month: 'short' })}
                     </span>
-                    <span className="text-lg font-black text-tut-blue leading-none">
+                    <span className="text-lg font-black text-blue-700 leading-none">
                       {new Date(s.session_date).getDate()}
                     </span>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-semibold text-gray-900">{s.student_name}</span>
-                      <span className="text-xs px-2 py-0.5 bg-tut-light text-tut-blue rounded-full">
+                      <span className="text-xs px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full">
                         {typeLabel[s.session_type] ?? s.session_type}
                       </span>
                     </div>
@@ -328,7 +309,6 @@ export default function TutorDashboard() {
           </div>
         )}
 
-        {/* Session history */}
         {activeTab === 'sessions' && (
           <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
@@ -345,9 +325,7 @@ export default function TutorDashboard() {
               <tbody className="divide-y divide-gray-100">
                 {past.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
-                      No past sessions found
-                    </td>
+                    <td colSpan={6} className="px-4 py-10 text-center text-gray-400">No past sessions found</td>
                   </tr>
                 ) : (
                   past.map((s) => (
@@ -359,9 +337,7 @@ export default function TutorDashboard() {
                       <td className="px-4 py-3 text-gray-600">
                         {new Date(s.session_date).toLocaleDateString('en-ZA', { day: '2-digit', month: 'short', year: 'numeric' })}
                       </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {typeLabel[s.session_type] ?? s.session_type}
-                      </td>
+                      <td className="px-4 py-3 text-gray-600">{typeLabel[s.session_type] ?? s.session_type}</td>
                       <td className="px-4 py-3 text-center">
                         <button
                           onClick={() => toggleAttended(s.id, s.attended)}
@@ -371,7 +347,7 @@ export default function TutorDashboard() {
                               : 'bg-red-100 text-red-500 hover:bg-red-200'
                           }`}
                         >
-                          {s.attended ? '✓' : '✗'} 
+                          {s.attended ? '✓' : '✗'}
                         </button>
                       </td>
                       <td className="px-4 py-3 text-gray-500 text-xs max-w-xs truncate">
@@ -394,35 +370,27 @@ export default function TutorDashboard() {
         )}
       </div>
 
-      {/* Notes modal */}
       {noteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold text-tut-blue mb-4">Session Notes</h3>
+            <h3 className="text-lg font-semibold text-blue-700 mb-4">Session Notes</h3>
             <textarea
-              className="w-full h-32 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-tut-blue/20 resize-none"
+              className="w-full h-32 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
               value={noteModal.text}
               onChange={(e) => setNoteModal({ ...noteModal, text: e.target.value })}
               placeholder="Enter session notes…"
             />
             <div className="flex justify-end gap-3 mt-4">
-              <button
-                onClick={() => setNoteModal(null)}
-                className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50"
-              >
+              <button onClick={() => setNoteModal(null)} className="px-4 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">
                 Cancel
               </button>
-              <button
-                onClick={saveNote}
-                disabled={saving}
-                className="px-4 py-2 text-sm bg-tut-blue text-white rounded-lg hover:bg-blue-800 disabled:opacity-50"
-              >
+              <button onClick={saveNote} disabled={saving} className="px-4 py-2 text-sm bg-blue-700 text-white rounded-lg hover:bg-blue-800 disabled:opacity-50">
                 {saving ? 'Saving…' : 'Save'}
               </button>
             </div>
           </div>
         </div>
       )}
-    </AppLayout>
+    </Layout>
   )
 }

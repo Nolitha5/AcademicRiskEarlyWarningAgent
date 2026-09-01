@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import AppLayout from '../layouts/AppLayout'
+import Layout from '../components/common/Layout'
 import StatCard from '../components/common/StatCard'
 import RiskBadge from '../components/common/RiskBadge'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ErrorMessage from '../components/common/ErrorMessage'
-import { modulesApi, studentsApi, riskApi } from '../services/api'
+import api from '../lib/api'
 import { BookOpen, Users, AlertTriangle, TrendingUp, Search } from 'lucide-react'
 
 interface Module {
@@ -46,9 +46,9 @@ export default function LecturerDashboard() {
         setLoading(true)
 
         const [modRes, studRes, riskRes] = await Promise.all([
-          modulesApi.list(),
-          studentsApi.list(),
-          riskApi.listAll(),
+          api.get('/modules'),
+          api.get('/students'),
+          api.get('/risk'),
         ])
 
         const mods: Module[] = modRes.data?.data ?? []
@@ -59,7 +59,6 @@ export default function LecturerDashboard() {
           risks.map((r: any) => [r.student_id, r])
         )
 
-        // For demo: assign each student to modules by year
         const enriched: ModuleWithStudents[] = mods.map((mod) => {
           const year = parseInt(mod.code.replace(/\D/g, '').charAt(0)) || 1
           const modStudents: StudentRow[] = studs
@@ -116,19 +115,18 @@ export default function LecturerDashboard() {
 
   const riskColor = (level?: string) => {
     if (level === 'HIGH') return 'bg-red-50 border-l-4 border-l-red-500'
-    if (level === 'MEDIUM') return 'bg-yellow-50 border-l-4 border-l-yellow-400'
+    if (level === 'MEDIUM') return 'bg-amber-50 border-l-4 border-l-amber-400'
     return ''
   }
 
-  if (loading) return <AppLayout><LoadingSpinner /></AppLayout>
-  if (error) return <AppLayout><ErrorMessage message={error} /></AppLayout>
+  if (loading) return <Layout><LoadingSpinner /></Layout>
+  if (error) return <Layout><ErrorMessage message={error} /></Layout>
 
   return (
-    <AppLayout>
+    <Layout>
       <div className="p-6 space-y-6">
-        {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-tut-blue">Lecturer Dashboard</h1>
+          <h1 className="text-2xl font-bold text-slate-800">Lecturer Dashboard</h1>
           <p className="text-gray-500 text-sm mt-1">
             Monitor student performance and risk levels across your modules
           </p>
@@ -146,8 +144,8 @@ export default function LecturerDashboard() {
                 onClick={() => { setSelectedModule(mod.id); setSearch('') }}
                 className={`w-full text-left p-3 rounded-lg border transition-all ${
                   selectedModule === mod.id
-                    ? 'bg-tut-blue text-white border-tut-blue shadow'
-                    : 'bg-white text-gray-700 border-gray-200 hover:border-tut-blue hover:shadow-sm'
+                    ? 'bg-blue-700 text-white border-blue-700 shadow'
+                    : 'bg-white text-gray-700 border-gray-200 hover:border-blue-500 hover:shadow-sm'
                 }`}
               >
                 <div className="font-semibold text-sm">{mod.code}</div>
@@ -169,11 +167,11 @@ export default function LecturerDashboard() {
               <>
                 <div className="bg-white rounded-xl border border-gray-200 p-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-tut-light flex items-center justify-center">
-                      <BookOpen className="w-5 h-5 text-tut-blue" />
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                      <BookOpen className="w-5 h-5 text-blue-700" />
                     </div>
                     <div>
-                      <h2 className="font-bold text-tut-blue text-lg">
+                      <h2 className="font-bold text-blue-700 text-lg">
                         {activeModule.code} — {activeModule.name}
                       </h2>
                       <p className="text-sm text-gray-500">{activeModule.credits} Credits</p>
@@ -181,35 +179,13 @@ export default function LecturerDashboard() {
                   </div>
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-4 gap-4">
-                  <StatCard
-                    label="Enrolled"
-                    value={totalStudents}
-                    icon={<Users className="w-5 h-5" />}
-                    color="blue"
-                  />
-                  <StatCard
-                    label="At Risk"
-                    value={atRisk}
-                    icon={<AlertTriangle className="w-5 h-5" />}
-                    color="red"
-                  />
-                  <StatCard
-                    label="HIGH Risk"
-                    value={highRiskTotal}
-                    icon={<AlertTriangle className="w-5 h-5" />}
-                    color="red"
-                  />
-                  <StatCard
-                    label="MEDIUM Risk"
-                    value={mediumRiskTotal}
-                    icon={<TrendingUp className="w-5 h-5" />}
-                    color="yellow"
-                  />
+                  <StatCard label="Enrolled"     value={totalStudents}  icon={<Users className="w-5 h-5" />}         color="blue" />
+                  <StatCard label="At Risk"       value={atRisk}         icon={<AlertTriangle className="w-5 h-5" />} color="red" />
+                  <StatCard label="HIGH Risk"     value={highRiskTotal}  icon={<AlertTriangle className="w-5 h-5" />} color="red" />
+                  <StatCard label="MEDIUM Risk"   value={mediumRiskTotal} icon={<TrendingUp className="w-5 h-5" />}  color="amber" />
                 </div>
 
-                {/* Student table */}
                 <div className="bg-white rounded-xl border border-gray-200">
                   <div className="p-4 border-b border-gray-100 flex items-center gap-3">
                     <div className="relative flex-1 max-w-xs">
@@ -219,7 +195,7 @@ export default function LecturerDashboard() {
                         placeholder="Search students…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-tut-blue/20"
+                        className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                       />
                     </div>
                     <span className="text-sm text-gray-500">{filteredStudents.length} students</span>
@@ -253,19 +229,15 @@ export default function LecturerDashboard() {
                                   <div className="font-medium text-gray-900">{student.full_name}</div>
                                   <div className="text-xs text-gray-400">{student.email}</div>
                                 </td>
-                                <td className="px-4 py-3 text-gray-600 font-mono text-xs">
-                                  {student.student_number}
-                                </td>
-                                <td className="px-4 py-3 text-gray-600">
-                                  Year {student.year_of_study}
-                                </td>
+                                <td className="px-4 py-3 text-gray-600 font-mono text-xs">{student.student_number}</td>
+                                <td className="px-4 py-3 text-gray-600">Year {student.year_of_study}</td>
                                 <td className="px-4 py-3 text-center">
-                                  <RiskBadge level={(student.risk_level ?? 'NONE') as any} size="sm" />
+                                  <RiskBadge level={(student.risk_level ?? 'NONE') as 'HIGH' | 'MEDIUM' | 'LOW' | 'NONE'} />
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                   <span className={`font-bold text-sm ${
                                     (student.risk_score ?? 0) >= 70 ? 'text-red-600' :
-                                    (student.risk_score ?? 0) >= 35 ? 'text-yellow-600' :
+                                    (student.risk_score ?? 0) >= 35 ? 'text-amber-600' :
                                     'text-green-600'
                                   }`}>
                                     {student.risk_score ?? 0}
@@ -274,18 +246,8 @@ export default function LecturerDashboard() {
                                 </td>
                                 <td className="px-4 py-3 text-center">
                                   <div className="flex justify-center gap-2">
-                                    <Link
-                                      to={`/students/${student.id}/profile`}
-                                      className="text-xs px-2 py-1 bg-tut-light text-tut-blue rounded hover:bg-tut-blue hover:text-white transition-colors"
-                                    >
-                                      Profile
-                                    </Link>
-                                    <Link
-                                      to={`/students/${student.id}/risk`}
-                                      className="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-600 hover:text-white transition-colors"
-                                    >
-                                      Risk
-                                    </Link>
+                                    <Link to={`/students/${student.id}/profile`} className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-700 hover:text-white transition-colors">Profile</Link>
+                                    <Link to={`/students/${student.id}/risk`}    className="text-xs px-2 py-1 bg-red-50 text-red-700 rounded hover:bg-red-600 hover:text-white transition-colors">Risk</Link>
                                   </div>
                                 </td>
                               </tr>
@@ -300,6 +262,6 @@ export default function LecturerDashboard() {
           </div>
         </div>
       </div>
-    </AppLayout>
+    </Layout>
   )
 }
